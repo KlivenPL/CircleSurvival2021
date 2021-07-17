@@ -1,15 +1,12 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Assets.Source.Balls {
-
     partial class BallInitialParameters {
         public partial class Builder {
 
             private float defuseTime;
             private float diameter;
             private Vector2 spawnPosition;
-            private Action<BallFacade> spawnAction;
 
             public BallInitialParameters Build() {
                 return new BallInitialParameters {
@@ -20,7 +17,7 @@ namespace Assets.Source.Balls {
             }
 
             public Builder SetDiffuseTime(float minDefuseTime, float maxDefuseTime) {
-                defuseTime = UnityEngine.Random.Range(minDefuseTime, maxDefuseTime);
+                defuseTime = Random.Range(minDefuseTime, maxDefuseTime);
                 return this;
             }
 

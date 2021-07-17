@@ -67,10 +67,7 @@ class Menu : MonoBehaviour, IEventListener<GameOverEvent> {
         StartCoroutine(Animate());
 
         SceneManager.sceneUnloaded += OnSceneUnloaded;
-        /*Camera.main.GetComponent<VignetteAndChromaticAberration>().blur = 1f;
-        Camera.main.GetComponent<VignetteAndChromaticAberration>().blurSpread = 1f;*/
     }
-
 
     public void PlayBtn() {
         StopAllCoroutines();
@@ -135,9 +132,6 @@ class Menu : MonoBehaviour, IEventListener<GameOverEvent> {
     }
 
     private IEnumerator ShowGameOverScreen() {
-        Time.timeScale = 1;
-        //*//*Camera.main.GetComponent<VignetteAndChromaticAberration>().blur = 1;
-        //Camera.main.GetComponent<VignetteAndChromaticAberration>().blurSpread = 1; *//*
         yield return new WaitForSeconds(1f);
         gameOverScoreTxt.text = score.ScoreValue.ToString("00.00").Replace(NumberDecimalSeparator, ":");
         gameOverHighscoreTxt.text = score.HighscoreValue.ToString("00.00").Replace(NumberDecimalSeparator, ":");

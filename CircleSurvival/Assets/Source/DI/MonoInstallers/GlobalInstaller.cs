@@ -11,6 +11,6 @@ public class GlobalInstaller : MonoInstaller {
         Container.Bind<ISaveManager>().To<KPlayerProps>().AsSingle();
         Container.BindInstance(GameObject.Find("Audio").GetComponent<AudioManager>()).AsSingle();
         Container.BindInstance(GameObject.Find("_Menu").GetComponent<Menu>()).AsSingle();
-        Container.BindInstance(GameObject.Find("Background").GetComponent<Background>()).AsSingle();
+        Container.BindInstance(GameObject.Find("BG").GetComponent<Background>()).AsSingle();
     }
 }

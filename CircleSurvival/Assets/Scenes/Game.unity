@@ -430,7 +430,7 @@ MonoBehaviour:
   - endTime: 20
     minTimeBetweenSpawns: 1.5
     maxTimeBetweenSpawns: 2
-    ballPoolMinSize: 1
+    ballPoolMinSize: 2
     ballPoolMaxSize: 2
     bombPoolMaxSize: 0
     defuseMinTime: 1
@@ -439,7 +439,7 @@ MonoBehaviour:
     minTimeBetweenSpawns: 1.5
     maxTimeBetweenSpawns: 2
     ballPoolMinSize: 1
-    ballPoolMaxSize: 2
+    ballPoolMaxSize: 3
     bombPoolMaxSize: 1
     defuseMinTime: 1
     defuseMaxTime: 1.5
@@ -478,9 +478,9 @@ MonoBehaviour:
   - endTime: 80
     minTimeBetweenSpawns: 0.5
     maxTimeBetweenSpawns: 0.75
-    ballPoolMinSize: 4
-    ballPoolMaxSize: 6
-    bombPoolMaxSize: 6
+    ballPoolMinSize: 3
+    ballPoolMaxSize: 5
+    bombPoolMaxSize: 3
     defuseMinTime: 0.4
     defuseMaxTime: 0.7
 --- !u!4 &1698275604

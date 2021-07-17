@@ -5,7 +5,6 @@ using Assets.Source.Cameras;
 using Assets.Source.Events;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using Zenject;
 
@@ -18,6 +17,7 @@ namespace Assets.Source.Balls {
         private IEnumerator<BallSpawnerStage> currentStageEnumerator;
         private BallSpawnerStage currentStage;
         private List<BallFacade> spawnedBalls;
+        private List<BallInitialParameters> ballsAwaitingForSpawn;
         private PoolManager poolManager;
         private Bounds spawnArea;
         private float spawnTimer;
@@ -37,6 +37,7 @@ namespace Assets.Source.Balls {
             currentStage = currentStageEnumerator.Current;
             nextStageTime = currentStage.EndTime;
             spawnedBalls = new List<BallFacade>();
+            ballsAwaitingForSpawn = new List<BallInitialParameters>();
             spawnTimer = 0.5f;
         }
 
@@ -48,6 +49,7 @@ namespace Assets.Source.Balls {
         public void OnEvent(GameOverEvent @event) {
             if (!gameOver) {
                 StopAllCoroutines();
+                ballsAwaitingForSpawn.Clear();
                 gameOver = true;
             }
         }
@@ -58,7 +60,7 @@ namespace Assets.Source.Balls {
 
             if ((spawnTimer -= Time.deltaTime) < 0) {
                 Spawn();
-                spawnTimer = Random.Range(currentStageEnumerator.Current.MinTimeBetweenSpawns, currentStageEnumerator.Current.MaxTimeBetweenSpawns);
+                spawnTimer = Random.Range(currentStage.MinTimeBetweenSpawns, currentStage.MaxTimeBetweenSpawns);
             }
 
             if ((playTime += Time.deltaTime) >= nextStageTime) {
@@ -72,50 +74,63 @@ namespace Assets.Source.Balls {
         }
 
         private void Spawn() {
-            var bombsToSpawnCount = Random.Range(0, currentStageEnumerator.Current.BombPoolMaxSize + 1);
-            var normalBallsToSpawnCount = Random.Range(currentStageEnumerator.Current.BallPoolMinSize, currentStageEnumerator.Current.BallPoolMaxSize + 1);
+            var bombsToSpawnCount = Random.Range(0, currentStage.BombPoolMaxSize + 1);
+            var normalBallsToSpawnCount = Random.Range(currentStage.BallPoolMinSize, currentStage.BallPoolMaxSize + 1);
 
             var bombsToSpawn = CreateBalls(bombsToSpawnCount);
-            var normalBallsToSpawn = CreateBalls(normalBallsToSpawnCount, bombsToSpawn.ToList());
+            var normalBallsToSpawn = CreateBalls(normalBallsToSpawnCount);
 
             StartCoroutine(SpawnBalls(spawnBombs: true, bombsToSpawn));
             StartCoroutine(SpawnBalls(spawnBombs: false, normalBallsToSpawn));
         }
 
-        private IEnumerable<BallInitialParameters> CreateBalls(int count, List<BallInitialParameters> awaitingBalls = null) {
-            awaitingBalls ??= new List<BallInitialParameters>();
+        private List<BallInitialParameters> CreateBalls(int count) {
+            var acceptedBalls = new List<BallInitialParameters>();
 
             for (int i = 0; i < count; i++) {
-                if (FindSpawnPosition(awaitingBalls, out var position, out var diameter)) {
+                if (FindSpawnPosition(out var position, out var diameter)) {
                     var ball = BallBuilder
-                        .SetDiffuseTime(currentStageEnumerator.Current.DefuseMinTime, currentStageEnumerator.Current.DefuseMaxTime)
+                        .SetDiffuseTime(currentStage.DefuseMinTime, currentStage.DefuseMaxTime)
                         .SetSpawnPosition(position)
                         .SetDiameter(diameter)
                         .Build();
 
-                    awaitingBalls.Add(ball);
-                    yield return ball;
+                    ballsAwaitingForSpawn.Add(ball);
+                    acceptedBalls.Add(ball);
                 }
             }
+
+            return acceptedBalls;
         }
 
         IEnumerator SpawnBalls(bool spawnBombs, IEnumerable<BallInitialParameters> ballInitialParameters) {
             if (spawnBombs)
-                yield return new WaitForSeconds(Random.Range(0f, 0.75f));
+                yield return new WaitForSeconds(Random.Range(0f, 0.25f));
 
             var spawnableType = spawnBombs ? SpawnableType.Ball_Bomb : SpawnableType.Ball_Normal;
 
             foreach (var ballParameter in ballInitialParameters) {
-                poolManager.Spawn(spawnableType, (Vector3)ballParameter.SpawnPosition + new Vector3(0, 0, 5), Vector3.zero, ballParameter.Diameter * Vector3.one, out var spawnedBallGo);
-                var spawnedBall = spawnedBallGo.GetComponent<BallFacade>();
-                spawnedBall.OnSpawn(ballParameter);
-                spawnedBalls.Add(spawnedBall);
+                bool posOk = true;
+                foreach (var ball in spawnedBalls) {
+                    if (Vector2.Distance(ballParameter.SpawnPosition, ball.transform.position) < (ballParameter.Diameter + ball.transform.localScale.x) / 2f + 0.25f) {
+                        posOk = false;
+                        break;
+                    }
+                }
+
+                if (posOk) {
+                    poolManager.Spawn(spawnableType, (Vector3)ballParameter.SpawnPosition + new Vector3(0, 0, 5), Vector3.zero, ballParameter.Diameter * Vector3.one, out var spawnedBallGo);
+                    var spawnedBall = spawnedBallGo.GetComponent<BallFacade>();
+                    spawnedBall.OnSpawn(ballParameter);
+                    spawnedBalls.Add(spawnedBall);
+                    ballsAwaitingForSpawn.Remove(ballParameter);
+                }
 
                 yield return new WaitForSeconds(0.25f);
             }
         }
 
-        private bool FindSpawnPosition(IEnumerable<BallInitialParameters> alreadyAcceptedBalls, out Vector2 position, out float diameter) {
+        private bool FindSpawnPosition(out Vector2 position, out float diameter) {
             diameter = 0;
             position = default;
 
@@ -123,7 +138,8 @@ namespace Assets.Source.Balls {
                 return false;
 
             int maxTries = 50;
-            while (true) {
+
+            for (int i = 0; i < maxTries; i++) {
                 position = new Vector2(Random.Range(spawnArea.min.x, spawnArea.max.x), Random.Range(spawnArea.min.y, spawnArea.max.y));
                 diameter = Random.Range(1f, 1.2f);
 
@@ -134,15 +150,16 @@ namespace Assets.Source.Balls {
 
                 // check if not colliding with other balls
                 bool posOk = true;
-                for (int i = 0; i < spawnedBalls.Count; i++) {
-                    if (Vector2.Distance(position, spawnedBalls[i].transform.position) <= diameter / 2f + spawnedBalls[i].Parameters.Diameter / 2f + 0.25f) {
+
+                foreach (var ball in spawnedBalls) {
+                    if (Vector2.Distance(position, ball.transform.position) <= (diameter + ball.transform.localScale.x) / 2f + 0.25f) {
                         posOk = false;
                         break;
                     }
                 }
 
-                foreach (var ball in alreadyAcceptedBalls) {
-                    if (Vector2.Distance(position, ball.SpawnPosition) <= diameter / 2f + ball.Diameter / 2f + 0.25f) {
+                foreach (var ball in ballsAwaitingForSpawn) {
+                    if (Vector2.Distance(position, ball.SpawnPosition) <= (diameter + ball.Diameter) / 2f + 0.25f) {
                         posOk = false;
                         break;
                     }
@@ -151,11 +168,9 @@ namespace Assets.Source.Balls {
                 if (posOk) {
                     return true;
                 }
-
-                if (maxTries-- == 0) {
-                    return false;
-                }
             }
+
+            return false;
         }
     }
 }

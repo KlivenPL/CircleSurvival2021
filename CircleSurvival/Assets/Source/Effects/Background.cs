@@ -45,7 +45,6 @@ namespace Assets.Source.Effects {
                     StartCoroutine(ChangePosition(line, posA, posB, z));
                 }
             }
-
             lineMaterial.color = colorSchemes[Random.Range(0, colorSchemes.Length)];
             mainColorId = Random.Range(0, colorSchemes.Length);
 

@@ -1,5 +1,4 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Assets.Source.Balls {
     partial class BallInitialParameters {
@@ -8,10 +7,6 @@ namespace Assets.Source.Balls {
         public float Diameter { get; private set; }
         public Vector2 SpawnPosition { get; private set; }
 
-        public Action<BallFacade> SpawnAction { get; private set; }
-
-        private BallInitialParameters() {
-
-        }
+        private BallInitialParameters() { }
     }
 }

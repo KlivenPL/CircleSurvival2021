@@ -27,7 +27,6 @@ public class GameSceneInstaller : MonoInstaller {
         Container.BindInstance(ballSpawner).AsSingle();
         Container.BindInstance(cameraManager).AsSingle();
         Container.BindInstance(Camera.main).WithId(InjectId.GameCamera).AsSingle();
-        Container.BindInstance(GameObject.Find("Background").GetComponent<Background>()).AsSingle();
     }
 
     private void InstallMobile() {

@@ -3,10 +3,7 @@ using Zenject;
 
 namespace Assets.Source.Cameras {
     class CameraManager : MonoBehaviour {
-        // private Bounds cameraBounds;
         new private Camera camera;
-
-        //public Bounds GetCameraBounds => cameraBounds == default ? cameraBounds = CalculateCameraBounds() : cameraBounds;
 
         [Inject]
         private void Init(
