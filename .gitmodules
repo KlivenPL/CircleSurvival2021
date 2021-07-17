@@ -1,0 +1,3 @@
+[submodule "CircleSurvival/Assets/KLib"]
+	path = CircleSurvival/Assets/KLib
+	url = https://github.com/KlivenPL/KLib
